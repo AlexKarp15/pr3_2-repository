@@ -1,123 +1,134 @@
-let character = {
-    name: "Pikachu",
+const enemies = [
+    { name: 'Charmander', maxHealth: 100, sprite: '/assets/Charmander.png' },
+    { name: 'Bulbasaur', maxHealth: 120, sprite: '/assets/Bulbasaur.png' },
+    { name: 'Squirtle', maxHealth: 140, sprite: '/assets/Squirtle.png' }
+];
+
+let currentEnemyIndex = 0; // Index of the current enemy
+
+const healthCharacterDisplay = document.getElementById("health-character");
+const healthEnemyDisplay = document.getElementById("health-enemy");
+const progressBarCharacter = document.getElementById("progressbar-character");
+const progressBarEnemy = document.getElementById("progressbar-enemy");
+const attackButton = document.getElementById("btn-kick");
+const attackButton2 = document.getElementById("btn-attack-2");
+const harmButton = document.getElementById("btn-harm");
+
+// Character Object
+const character = {
     health: 100,
     maxHealth: 100,
-    elementName: "character",
-    attackPower: 40,
 
-    updateHealth() {
-        const healthDisplay = document.getElementById(`health-${this.elementName}`);
-        const progressBar = document.getElementById(`progressbar-${this.elementName}`);
-        healthDisplay.textContent = `${this.health} / ${this.maxHealth}`;
-        progressBar.style.width = `${(this.health / this.maxHealth) * 100}%`;
+    updateHealthDisplay() {
+        healthCharacterDisplay.textContent = `${this.health} / ${this.maxHealth}`;
+        progressBarCharacter.style.width = `${(this.health / this.maxHealth) * 100}%`;
     },
 
-    attack(target) {
-        const damage = this.calculateDamage();
-        target.takeDamage(damage); // Використовуємо метод ворога для отримання шкоди
-        target.updateHealth(); // Оновлюємо здоров'я ворога
+    attackEnemy(damage) {
+        enemy.health -= damage;
+        if (enemy.health < 0) enemy.health = 0;
+        enemy.updateHealthDisplay();
 
-        if (target.isDefeated()) {
-            alert(`Ви перемогли ${target.current.name}!`);
-            loadNextEnemy();
+        if (enemy.health === 0) {
+            alert(`You defeated ${enemy.name}!`);
+            loadNextEnemy(); // Load next enemy after victory
         } else {
-            target.attack(this); // Ворога атакує персонаж
+            this.attackCharacter();
         }
     },
 
-    calculateDamage() {
-        return Math.floor(Math.random() * this.attackPower) + 1;
-    },
+    attackCharacter() {
+        const damageToCharacter = Math.floor(Math.random() * 10) + 1;
+        this.health -= damageToCharacter;
 
-    takeDamage(damage) {
-        this.health -= damage;
         if (this.health < 0) this.health = 0;
-        this.updateHealth(); // Оновлюємо здоров'я персонажа
+        this.updateHealthDisplay();
+
+        if (this.health === 0) {
+            alert("You lost! Game over!");
+            resetGame(); // Restart the game after losing
+        }
     },
 
-    isDefeated() {
-        return this.health === 0;
+    resetHealth() {
+        this.health = this.maxHealth;
+        this.updateHealthDisplay();
     }
 };
 
-let enemy = {
-    enemiesList: [
-        { name: 'Charmander', maxHealth: 100, attackPower: 15, sprite: '/assets/Charmander.png' },
-        { name: 'Bulbasaur', maxHealth: 120, attackPower: 20, sprite: '/assets/Bulbasaur.png' },
-        { name: 'Squirtle', maxHealth: 140, attackPower: 25, sprite: '/assets/Squirtle.png' }
-    ],
-    currentEnemyIndex: 0,
-
-    get current() {
-        return this.enemiesList[this.currentEnemyIndex];
-    },
-
+// Enemy Object
+const enemy = {
+    name: '',
     health: 100,
+    maxHealth: 100,
+    sprite: '',
 
-    updateHealth() {
-        const healthDisplay = document.getElementById(`health-enemy`);
-        const progressBar = document.getElementById(`progressbar-enemy`);
-        healthDisplay.textContent = `${this.health} / ${this.current.maxHealth}`;
-        progressBar.style.width = `${(this.health / this.current.maxHealth) * 100}%`;
+    updateHealthDisplay() {
+        healthEnemyDisplay.textContent = `${this.health} / ${this.maxHealth}`;
+        progressBarEnemy.style.width = `${(this.health / this.maxHealth) * 100}%`;
     },
 
-    takeDamage(damage) {
+    reset() {
+        this.name = enemies[currentEnemyIndex].name;
+        this.health = enemies[currentEnemyIndex].maxHealth;
+        this.sprite = enemies[currentEnemyIndex].sprite;
+        this.updateHealthDisplay();
+        const enemySprite = document.querySelector('.enemy .sprite');
+        enemySprite.src = this.sprite;
+        document.getElementById("name-enemy").textContent = this.name;
+    },
+
+    harm(damage) {
         this.health -= damage;
         if (this.health < 0) this.health = 0;
-    },
+        this.updateHealthDisplay();
 
-    isDefeated() {
-        return this.health === 0;
-    },
-
-    attack(target) {
-        const damage = Math.floor(Math.random() * this.current.attackPower) + 1;
-        target.takeDamage(damage); // Використовуємо метод персонажа для отримання шкоди
-        target.updateHealth(); // Оновлюємо здоров'я персонажа
-
-        if (target.isDefeated()) {
-            alert(`Вам не пощастило! Ви програли!`);
-            resetGame();
+        if (this.health === 0) {
+            alert(`You defeated ${this.name}!`);
+            loadNextEnemy(); // Load next enemy after victory
         }
     }
 };
 
-// UI функції
 function updateEnemyDisplay() {
-    const enemySprite = document.querySelector('.enemy .sprite');
-    const enemyName = document.getElementById("name-enemy");
-
-    enemySprite.src = enemy.current.sprite;
-    enemyName.textContent = enemy.current.name;
-
-    enemy.health = enemy.current.maxHealth;
-    enemy.updateHealth();
+    enemy.reset(); // Initialize enemy properties and update display
 }
 
+// Load next enemy function
 function loadNextEnemy() {
-    enemy.currentEnemyIndex++;
+    currentEnemyIndex++;
 
-    if (enemy.currentEnemyIndex >= enemy.enemiesList.length) {
-        alert("Ви перемогли всіх суперників! Гра завершена!");
-        resetGame();
+    if (currentEnemyIndex >= enemies.length) {
+        alert("You have defeated all enemies! Game over!");
+        resetGame(); // Restart game after defeating all enemies
         return;
     }
 
-    updateEnemyDisplay();
+    updateEnemyDisplay(); // Update display for the new enemy
 }
 
+// Reset the game
 function resetGame() {
-    enemy.currentEnemyIndex = 0;
-    character.health = character.maxHealth;
-    enemy.health = enemy.current.maxHealth;
-    character.updateHealth();
-    updateEnemyDisplay();
+    currentEnemyIndex = 0;
+    character.resetHealth();
+    enemy.reset(); // Initialize the enemy
 }
 
-// Обробники подій
-document.getElementById("btn-kick").addEventListener("click", () => character.attack(enemy));
-document.getElementById("btn-attack-2").addEventListener("click", () => character.attack(enemy));
-
-// Початковий стан гри
-character.updateHealth();
+// Initial state update
 updateEnemyDisplay();
+character.updateHealthDisplay();
+
+attackButton.addEventListener("click", () => {
+    const damage = Math.floor(Math.random() * 30) + 1; // Thunder Jolt damage
+    character.attackEnemy(damage); // Character attacks the enemy
+});
+
+attackButton2.addEventListener("click", () => {
+    const damage = Math.floor(Math.random() * 10) + 1; // Quick Attack damage
+    character.attackEnemy(damage); // Character attacks the enemy
+});
+
+harmButton.addEventListener("click", () => {
+    const damage = Math.floor(Math.random() * 20) + 1; // Fire Blast damage
+    enemy.harm(damage); // Enemy takes damage only
+});
