@@ -1,4 +1,3 @@
-// Об'єкт персонажа
 let character = {
     name: "Pikachu",
     health: 100,
@@ -14,31 +13,43 @@ let character = {
     },
 
     attack(target) {
-        const damage = Math.floor(Math.random() * this.attackPower) + 1;
-        target.health -= damage;
-        if (target.health < 0) target.health = 0;
-        target.updateHealth();
+        const damage = this.calculateDamage();
+        target.takeDamage(damage); // Використовуємо метод ворога для отримання шкоди
+        target.updateHealth(); // Оновлюємо здоров'я ворога
 
-        if (target.health === 0) {
-            alert(`Ви перемогли ${target.current.name}!`); // Використовуємо target.current.name
-            loadNextEnemy(); // Завантажуємо нового суперника
+        if (target.isDefeated()) {
+            alert(`Ви перемогли ${target.current.name}!`);
+            loadNextEnemy();
         } else {
             target.attack(this); // Ворога атакує персонаж
         }
+    },
+
+    calculateDamage() {
+        return Math.floor(Math.random() * this.attackPower) + 1;
+    },
+
+    takeDamage(damage) {
+        this.health -= damage;
+        if (this.health < 0) this.health = 0;
+        this.updateHealth(); // Оновлюємо здоров'я персонажа
+    },
+
+    isDefeated() {
+        return this.health === 0;
     }
 };
 
-// Об'єкт ворога
 let enemy = {
     enemiesList: [
-        {name: 'Charmander', maxHealth: 100, attackPower: 15, sprite: '/assets/Charmander.png'},
-        {name: 'Bulbasaur', maxHealth: 120, attackPower: 20, sprite: '/assets/Bulbasaur.png'},
-        {name: 'Squirtle', maxHealth: 140, attackPower: 25, sprite: '/assets/Squirtle.png'}
+        { name: 'Charmander', maxHealth: 100, attackPower: 15, sprite: '/assets/Charmander.png' },
+        { name: 'Bulbasaur', maxHealth: 120, attackPower: 20, sprite: '/assets/Bulbasaur.png' },
+        { name: 'Squirtle', maxHealth: 140, attackPower: 25, sprite: '/assets/Squirtle.png' }
     ],
     currentEnemyIndex: 0,
 
     get current() {
-        return this.enemiesList[this.currentEnemyIndex]; // Завжди повертає поточного ворога
+        return this.enemiesList[this.currentEnemyIndex];
     },
 
     health: 100,
@@ -50,34 +61,39 @@ let enemy = {
         progressBar.style.width = `${(this.health / this.current.maxHealth) * 100}%`;
     },
 
+    takeDamage(damage) {
+        this.health -= damage;
+        if (this.health < 0) this.health = 0;
+    },
+
+    isDefeated() {
+        return this.health === 0;
+    },
+
     attack(target) {
         const damage = Math.floor(Math.random() * this.current.attackPower) + 1;
-        target.health -= damage;
-        if (target.health < 0) target.health = 0;
-        target.updateHealth();
+        target.takeDamage(damage); // Використовуємо метод персонажа для отримання шкоди
+        target.updateHealth(); // Оновлюємо здоров'я персонажа
 
-        if (target.health === 0) {
+        if (target.isDefeated()) {
             alert(`Вам не пощастило! Ви програли!`);
             resetGame();
         }
     }
 };
 
-// Оновлюємо зображення та інформацію про суперника
+// UI функції
 function updateEnemyDisplay() {
     const enemySprite = document.querySelector('.enemy .sprite');
     const enemyName = document.getElementById("name-enemy");
 
-    // Оновлюємо зображення та ім'я
     enemySprite.src = enemy.current.sprite;
     enemyName.textContent = enemy.current.name;
 
-    // Оновлюємо здоров'я суперника
     enemy.health = enemy.current.maxHealth;
     enemy.updateHealth();
 }
 
-// Завантаження наступного суперника
 function loadNextEnemy() {
     enemy.currentEnemyIndex++;
 
@@ -90,7 +106,6 @@ function loadNextEnemy() {
     updateEnemyDisplay();
 }
 
-// Скидання гри
 function resetGame() {
     enemy.currentEnemyIndex = 0;
     character.health = character.maxHealth;
@@ -99,10 +114,10 @@ function resetGame() {
     updateEnemyDisplay();
 }
 
-// Додавання обробників подій для кнопок
+// Обробники подій
 document.getElementById("btn-kick").addEventListener("click", () => character.attack(enemy));
 document.getElementById("btn-attack-2").addEventListener("click", () => character.attack(enemy));
 
-// Початкове завантаження стану гри
+// Початковий стан гри
 character.updateHealth();
 updateEnemyDisplay();
